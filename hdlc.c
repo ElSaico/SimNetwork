@@ -4,10 +4,12 @@
  **  your hardware. 
  **/
 
-#include <stdio.h>
 #include <assert.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <string.h>
+
+#include "hdlc.h"
 
 #define PPPINITFCS16    0xffff  /* Initial FCS value    */
 #define PPPGOODFCS16    0xf0b8  /* Good final FCS value */ 
@@ -68,56 +70,73 @@ u16 pppfcs16(u16 fcs, unsigned char *cp,int len)
    return (fcs);
 }
 
-
-/**
- ** Exemplo de uso do calculo do CRC (FCS)
- **
- **/
-
- 
-int  main(int argc, char **argv)
-{
-   char   cp[DATA_SIZE+2];
-   struct timeval tv;
-   int    i,len;
-   u16    trialfcs;
-   
-   len = DATA_SIZE;
-    
-   gettimeofday(&tv, NULL);
-   srand(tv.tv_usec);
-   
-   for (i=0; i<len; i++)
-       cp[i] = (char)rand();
-   
-  /*  
-   *  Calcula o CRC de "len" dados a partir do ponteiro cp. 
-   *  Dois ultimos bytes sao para armazenamento do CRC
-   */
-
-   trialfcs  = pppfcs16( PPPINITFCS16, cp, len );
-   trialfcs  = trialfcs ^ 0xffff;  	          /* complement */
-   cp[len]   = (char)(trialfcs & 0x00ff);         /* LSB first  */
-   cp[len+1] = (char)((trialfcs >> 8) & 0x00ff);
-
-   i = rand();
-   i = i % 5;
-   if ( i == 0 ) {
-      cp[1] = ~cp[1];
-      printf("Gerando erro...\n");
-   }
-      
-
-  /*
-   *  Calcula o CRC de "len+2" dados a partir do ponteiro cp,
-   *  ou seja, calcula o CRC considerando o CRC calculado
-   *  anteriormente como parte dos dados
-   */  
-    
-   trialfcs = pppfcs16( PPPINITFCS16, cp, len + 2 );
-   if ( trialfcs == PPPGOODFCS16 )
-      printf("Good FCS\n");
-   else
-      printf("Bad FCS\n");   
+int byte_stuff(uint8_t* data, int data_len) {
+	int i, new_len = data_len;
+	for (i = 1; i < new_len-1; ++i) {
+		if ((data[i] == FRAME_FLAG) || (data[i] == ESCAPE_CHAR)) {
+			data[i] ^= ESCAPE_CONST;
+			memmove(data+i+1, data+i, new_len-i);
+			data[i] = ESCAPE_CHAR;
+			new_len++;
+		}
+	}
+	return new_len;
 }
-    
+
+int byte_unstuff(uint8_t* data, int data_len) {
+	int i, new_len = data_len;
+	for (i = 1; i < new_len-1; ++i) {
+		if (data[i] == ESCAPE_CHAR) {
+			memmove(data+i, data+i+1, new_len-i-1);
+			data[i] ^= ESCAPE_CONST;
+			new_len--;
+		}
+	}
+	return new_len;
+}
+
+int build_frame(uint8_t* buffer, uint8_t control, const uint8_t* data, int data_len) {
+	uint8_t* ptbuf = buffer;
+	
+	HDLCHeader head;
+	head.init_flag = FRAME_FLAG;
+	head.address = FRAME_BCAST;
+	head.control = control;
+	memcpy(ptbuf, &head, 3);
+	
+	ptbuf += 3;
+	memcpy(ptbuf, data, data_len);
+	
+	ptbuf += data_len;
+	HDLCFooter foot;
+	foot.fcs = pppfcs16(PPPINITFCS16, buffer+1, data_len+2); // endereço + controle + dados
+	foot.fcs ^= 0xFFFF;
+	foot.end_flag = FRAME_FLAG;
+	memcpy(ptbuf, &foot, 3);
+	
+	return byte_stuff(buffer, data_len+6);
+}
+
+int build_I(uint8_t* buffer, int ns, int nr, const uint8_t* data, int data_len) {
+	return build_frame(buffer, I_FRAME | (ns << 4) | nr, data, data_len);
+}
+
+int build_sabm(uint8_t* buffer) {
+	return build_frame(buffer, U_SABM, "", 0);
+}
+
+int build_ua(uint8_t* buffer) {
+	return build_frame(buffer, U_UA, "", 0);
+}
+
+int build_disc(uint8_t* buffer) {
+	return build_frame(buffer, U_DISC, "", 0);
+}
+
+int build_rr(uint8_t* buffer, int n) {
+	return build_frame(buffer, S_FRAME | S_RR | (n << 4), "", 0);
+}
+
+int build_rnr(uint8_t* buffer, int n) {
+	return build_frame(buffer, S_FRAME | S_RNR | (n << 4), "", 0);
+}

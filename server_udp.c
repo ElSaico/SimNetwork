@@ -8,6 +8,8 @@
 #include <netdb.h>
 #include <stdio.h>
 
+#define CONN_PORT 64000
+
 void error(char *msg)
 {
     perror(msg);
@@ -21,18 +23,13 @@ int main(int argc, char *argv[])
    struct sockaddr_in from;
    char buf[1024];
 
-   if (argc < 2) {
-      fprintf(stderr, "ERROR, no port provided\n");
-      exit(0);
-   }
-   
    sock=socket(AF_INET, SOCK_DGRAM, 0);
    if (sock < 0) error("Opening socket");
    length = sizeof(server);
    bzero(&server,length);
    server.sin_family=AF_INET;
    server.sin_addr.s_addr=INADDR_ANY;
-   server.sin_port=htons(atoi(argv[1]));
+   server.sin_port=htons(CONN_PORT);
    if (bind(sock,(struct sockaddr *)&server,length)<0) 
        error("binding");
    fromlen = sizeof(struct sockaddr_in);
