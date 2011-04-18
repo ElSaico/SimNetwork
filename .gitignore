@@ -1,3 +1,4 @@
-a.out
+hdlc_client
+hdlc_server
 *.o
 *.swp

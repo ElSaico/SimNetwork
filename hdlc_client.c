@@ -13,9 +13,10 @@
 
 void error(char *);
 int main(int argc, char **argv) {
-	int c, n, len_send, len_recv;
+	int c, len_send, len_recv;
 	struct sockaddr_in server, from;
-	char buf_send[256], buf_recv[256], *host, *filename; // aumentar buffers por conta do escaping?
+	uint8_t buf_send[256], buf_recv[256]; // aumentar buffers por conta do escaping?
+	char *host = NULL, *filename = NULL;
 	
 	opterr = 0;
 	while ((c = getopt(argc, argv, "h:f:")) != -1) {
@@ -42,7 +43,7 @@ int main(int argc, char **argv) {
 	
 	bcopy((char *)hp->h_addr, (char *)&server.sin_addr, hp->h_length);
 	server.sin_port = htons(CONN_PORT);
-	int length = sizeof(struct sockaddr_in);
+	socklen_t length = sizeof(struct sockaddr_in);
 	
 	while (1) {
 		len_send = build_sabm(buf_send);
