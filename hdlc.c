@@ -117,8 +117,8 @@ int build_frame(uint8_t* buffer, uint8_t control, const uint8_t* data, int data_
 	return byte_stuff(buffer, data_len+6);
 }
 
-int build_I(uint8_t* buffer, int ns, int nr, const uint8_t* data, int data_len) {
-	return build_frame(buffer, I_FRAME | (ns << 4) | nr, data, data_len);
+int build_I(uint8_t* buffer, int n, const uint8_t* data, int data_len) {
+	return build_frame(buffer, I_FRAME | (n << 4), data, data_len);
 }
 
 int build_sabm(uint8_t* buffer) {
@@ -134,9 +134,9 @@ int build_disc(uint8_t* buffer) {
 }
 
 int build_rr(uint8_t* buffer, int n) {
-	return build_frame(buffer, S_FRAME | S_RR | (n << 4), "", 0);
+	return build_frame(buffer, S_FRAME | S_RR | n, "", 0);
 }
 
 int build_rnr(uint8_t* buffer, int n) {
-	return build_frame(buffer, S_FRAME | S_RNR | (n << 4), "", 0);
+	return build_frame(buffer, S_FRAME | S_RNR | n, "", 0);
 }

@@ -40,7 +40,7 @@ typedef struct {
 
 uint16_t pppfcs16(uint16_t fcs, uint8_t* buffer, int length);
 
-int build_I(uint8_t* buffer, int ns, int nr, const uint8_t* data, int data_len);
+int build_I(uint8_t* buffer, int n, const uint8_t* data, int data_len);
 int build_sabm(uint8_t* buffer);
 int build_ua(uint8_t* buffer);
 int build_disc(uint8_t* buffer);
