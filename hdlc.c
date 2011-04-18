@@ -140,3 +140,15 @@ int build_rr(uint8_t* buffer, int n) {
 int build_rnr(uint8_t* buffer, int n) {
 	return build_frame(buffer, S_FRAME | S_RNR | n, "", 0);
 }
+
+uint8_t frame_type(uint8_t* frame, int size) {
+	HDLCHeader* head = (HDLCHeader*)(frame+1); // que foi? gosto de viver perigosamente
+	switch(head->control) {
+		case U_SABM:
+		case U_UA:
+		case U_DISC:
+			return head->control;
+		default:
+			return head->control & NOT_I ? head->control & S_TYPE : I_FRAME;
+	}
+}

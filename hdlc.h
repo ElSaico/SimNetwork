@@ -6,8 +6,10 @@
 #define I_FRAME     0x00
 #define NS_SENDER   0x70
 #define NS_RECEIVER 0x07
+#define NOT_I       0x80
 
 #define S_FRAME 0x80
+#define S_TYPE  0x30
 #define S_RR    0x00
 #define S_RNR   0x10
 #define S_REJ   0x20
