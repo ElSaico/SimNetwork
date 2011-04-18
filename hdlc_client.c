@@ -45,8 +45,8 @@ int main(int argc, char **argv) {
 	server.sin_port = htons(CONN_PORT);
 	socklen_t length = sizeof(struct sockaddr_in);
 	
+	len_send = build_sabm(buf_send);
 	while (1) {
-		len_send = build_sabm(buf_send);
 		sendto(sock, buf_send, len_send, 0, (struct sockaddr*)&server, length);
 		// timeout e blá
 		len_recv = recvfrom(sock, buf_recv, 256, 0, (struct sockaddr*)&from, &length);
