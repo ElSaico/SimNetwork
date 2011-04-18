@@ -13,11 +13,9 @@
 
 void error(char *);
 int main(int argc, char **argv) {
-	int c, sock, length, n;
+	int c, n, len_send, len_recv;
 	struct sockaddr_in server, from;
-	struct hostent *hp;
-	char buffer[256], *host, *filename;
-	FILE* file;
+	char buf_send[256], buf_recv[256], *host, *filename; // aumentar buffers por conta do escaping?
 	
 	opterr = 0;
 	while ((c = getopt(argc, argv, "h:f:")) != -1) {
@@ -32,28 +30,29 @@ int main(int argc, char **argv) {
 		}
 	}
 	
-	sock = socket(AF_INET, SOCK_DGRAM, 0);
+	int sock = socket(AF_INET, SOCK_DGRAM, 0);
 	if (sock < 0) error("socket");
 	
 	server.sin_family = AF_INET;
-	hp = gethostbyname(host);
+	struct hostent* hp = gethostbyname(host);
 	if (hp == 0) error("Unknown host");
 	
-	file = fopen(filename, "r");
+	FILE* file = fopen(filename, "r");
 	if (file == 0) error("file");
 	
 	bcopy((char *)hp->h_addr, (char *)&server.sin_addr, hp->h_length);
 	server.sin_port = htons(CONN_PORT);
-	length=sizeof(struct sockaddr_in);
-	printf("Please enter the message: ");
-	bzero(buffer,256);
-	fgets(buffer,255,stdin);
-	n=sendto(sock,buffer,strlen(buffer),0,&server,length);
-	if (n < 0) error("Sendto");
-	n = recvfrom(sock,buffer,256,0,&from, &length);
-	if (n < 0) error("recvfrom");
-	write(1,"Got an ack: ",12);
-	write(1,buffer,n);
+	int length = sizeof(struct sockaddr_in);
+	
+	while (1) {
+		len_send = build_sabm(buf_send);
+		sendto(sock, buf_send, len_send, 0, (struct sockaddr*)&server, length);
+		// timeout e blá
+		len_recv = recvfrom(sock, buf_recv, 256, 0, (struct sockaddr*)&from, &length);
+		// se for UA e tiver nos conforme, break
+	}
+	
+	return 0;
 }
 
 void error(char *msg) {
