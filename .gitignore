@@ -1,4 +1,3 @@
-hdlc_client
-hdlc_server
+sim_hdlc
 *.o
 *.swp

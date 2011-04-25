@@ -1,3 +1,6 @@
+#ifndef _HDLC_H
+#define _HDLC_H
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -49,3 +52,5 @@ int build_ua(uint8_t* buffer);
 int build_disc(uint8_t* buffer);
 int build_rr(uint8_t* buffer, int n);
 int build_rnr(uint8_t* buffer, int n);
+
+#endif

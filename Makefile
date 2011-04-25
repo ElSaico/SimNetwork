@@ -1,17 +1,14 @@
-OBJS = hdlc.o
+OBJS = sim_hdlc.o hdlc.o hdlc_client.o hdlc_server.o
 
 SRCS = $(OBJS,.o=.c)
 
-all: client server
+all: sim_hdlc
 
-client: $(OBJS) hdlc_client.o
-	gcc -O2 -lc -o hdlc_client $(OBJS) hdlc_client.o
-
-server: $(OBJS) hdlc_server.o
-	gcc -O2 -lc -o hdlc_server $(OBJS) hdlc_server.o
+sim_hdlc: $(OBJS)
+	gcc -O2 -lc -o sim_hdlc $(OBJS)
 
 .c.o:
 	gcc -c -O2 -Wall $<
 
 clean:
-	rm -f hdlc_client hdlc_server *.o
+	rm -f sim_hdlc *.o
