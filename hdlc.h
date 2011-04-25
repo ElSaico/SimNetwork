@@ -40,7 +40,7 @@
 
 int len_send, len_recv;
 uint8_t buf_send[MAX_BUFFER], buf_recv[MAX_BUFFER];
-pthread_mutex_t mutex;
+pthread_mutex_t mutex, log_lock;
 pthread_cond_t received;
 
 typedef struct {
@@ -69,5 +69,7 @@ int build_ua(uint8_t* buffer);
 int build_disc(uint8_t* buffer);
 int build_rr(uint8_t* buffer, int n);
 int build_rnr(uint8_t* buffer, int n);
+
+void report(const char* who, const char* msg);
 
 #endif

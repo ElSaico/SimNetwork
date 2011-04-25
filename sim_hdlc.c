@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
 	}
 	
 	opterr = 0;
-	while ((c = getopt(argc, argv, "h:f")) != -1) {
+	while ((c = getopt(argc, argv, "h:f:")) != -1) {
 		switch(c) {
 			case 'h':
 				host = optarg; break;
@@ -37,6 +37,7 @@ int main(int argc, char **argv) {
 		}
 	}
 	
+	pthread_mutex_init(&log_lock, NULL);
 	pthread_mutex_init(&mutex, NULL);
 	pthread_cond_init(&received, NULL);
 	
@@ -53,8 +54,10 @@ int main(int argc, char **argv) {
 	
 	srand(time(NULL));
 	if (filename == NULL) {
+		printf("Initializing server\n");
 		run_server(&data);
 	} else {
+		printf("Initializing client\n");
 		data.file = fopen(filename, "r");
 		if (data.file == 0) error("file");
 		run_client(&data);
@@ -63,6 +66,7 @@ int main(int argc, char **argv) {
 	
 	pthread_cond_destroy(&received);
 	pthread_mutex_destroy(&mutex);
+	pthread_mutex_destroy(&log_lock);
 	return 0;
 }
 

@@ -107,7 +107,7 @@ int build_frame(uint8_t* buffer, uint8_t control, const uint8_t* data, int data_
 	
 	ptbuf += 3;
 	memcpy(ptbuf, data, data_len);
-	if (rand() % 100 < 10)
+	if ((data_len > 0) && (rand() % 100 < 10))
 		ptbuf[rand() % data_len] ^= 0xFF;
 	
 	ptbuf += data_len;
@@ -154,4 +154,10 @@ uint8_t frame_type(uint8_t* frame, int size) {
 		default:
 			return head->control & NOT_I ? head->control & S_TYPE : I_FRAME;
 	}
+}
+
+void report(const char* who, const char* msg) {
+	pthread_mutex_lock(&log_lock);
+	printf("(%s) %s\n", who, msg);
+	pthread_mutex_unlock(&log_lock);
 }

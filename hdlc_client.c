@@ -16,10 +16,11 @@ void* send_sabm(void* args) {
 		len_send = build_sabm(buf_send);
 		sendto(data->sock, buf_send, len_send, 0, (struct sockaddr*)&data->sock_addr, data->sock_len);
 		wait = pthread_cond_timedwait(&received, &mutex, &limit);
-		if (wait != ETIMEDOUT) {
+		if (wait == 0) {
 			pthread_mutex_unlock(&mutex);
 			pthread_exit(NULL);
 		}
+		report("tx", "[TIMEOUT] SABM");
 	}
 }
 
