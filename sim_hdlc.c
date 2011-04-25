@@ -2,6 +2,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <fcntl.h>
 #include <unistd.h>
 
 #include <stdio.h>
@@ -43,6 +44,8 @@ int main(int argc, char **argv) {
 	
 	data.sock = socket(AF_INET, SOCK_DGRAM, 0);
 	if (data.sock < 0) error("socket");
+	int flags = fcntl(data.sock, F_GETFL);
+	fcntl(data.sock, F_SETFL, flags | O_NONBLOCK);
 	
 	data.sock_addr.sin_family = AF_INET;
 	struct hostent* hp = gethostbyname(host);
