@@ -1,9 +1,6 @@
 #include "hdlc_client.h"
 
 void run_client(int sock, struct sockaddr* server, socklen_t len, FILE* file) {
-	int len_send, len_recv;
-	uint8_t buf_send[MAX_BUFFER], buf_recv[MAX_BUFFER];
-	
 	len_send = build_sabm(buf_send);
 	while (1) {
 		sendto(sock, buf_send, len_send, 0, server, len);

@@ -33,6 +33,9 @@
 
 #define CRC_OK 0xF0B8
 
+static int len_send, len_recv;
+static uint8_t buf_send[MAX_BUFFER], buf_recv[MAX_BUFFER];
+
 typedef struct {
 	uint8_t init_flag;
 	uint8_t address;
