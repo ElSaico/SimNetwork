@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "hdlc.h"
 #include "hdlc_server.h"
@@ -47,6 +48,7 @@ int main(int argc, char **argv) {
 	server.sin_port = htons(CONN_PORT);
 	socklen_t length = sizeof(struct sockaddr_in);
 	
+	srand(time(NULL));
 	if (filename == NULL) {
 		run_server(sock, (struct sockaddr*)&server, length);
 	} else {

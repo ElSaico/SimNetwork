@@ -8,6 +8,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "hdlc.h"
 
@@ -106,6 +107,8 @@ int build_frame(uint8_t* buffer, uint8_t control, const uint8_t* data, int data_
 	
 	ptbuf += 3;
 	memcpy(ptbuf, data, data_len);
+	if (rand() % 100 < 10)
+		ptbuf[rand() % data_len] ^= 0xFF;
 	
 	ptbuf += data_len;
 	HDLCFooter foot;
@@ -122,23 +125,23 @@ int build_I(uint8_t* buffer, int n, const uint8_t* data, int data_len) {
 }
 
 int build_sabm(uint8_t* buffer) {
-	return build_frame(buffer, U_SABM, "", 0);
+	return build_frame(buffer, U_SABM, (const uint8_t*)"", 0);
 }
 
 int build_ua(uint8_t* buffer) {
-	return build_frame(buffer, U_UA, "", 0);
+	return build_frame(buffer, U_UA, (const uint8_t*)"", 0);
 }
 
 int build_disc(uint8_t* buffer) {
-	return build_frame(buffer, U_DISC, "", 0);
+	return build_frame(buffer, U_DISC, (const uint8_t*)"", 0);
 }
 
 int build_rr(uint8_t* buffer, int n) {
-	return build_frame(buffer, S_FRAME | S_RR | n, "", 0);
+	return build_frame(buffer, S_FRAME | S_RR | n, (const uint8_t*)"", 0);
 }
 
 int build_rnr(uint8_t* buffer, int n) {
-	return build_frame(buffer, S_FRAME | S_RNR | n, "", 0);
+	return build_frame(buffer, S_FRAME | S_RNR | n, (const uint8_t*)"", 0);
 }
 
 uint8_t frame_type(uint8_t* frame, int size) {
