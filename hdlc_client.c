@@ -1,7 +1,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
 
@@ -14,8 +13,8 @@
 void error(char *);
 int main(int argc, char **argv) {
 	int c, len_send, len_recv;
-	struct sockaddr_in server, from;
-	uint8_t buf_send[256], buf_recv[256]; // aumentar buffers por conta do escaping?
+	struct sockaddr_in server;
+	uint8_t buf_send[MAX_BUFFER], buf_recv[MAX_BUFFER];
 	char *host = NULL, *filename = NULL;
 	
 	opterr = 0;
@@ -49,7 +48,7 @@ int main(int argc, char **argv) {
 	while (1) {
 		sendto(sock, buf_send, len_send, 0, (struct sockaddr*)&server, length);
 		// timeout e blá
-		len_recv = recvfrom(sock, buf_recv, 256, 0, (struct sockaddr*)&from, &length);
+		len_recv = recvfrom(sock, buf_recv, MAX_BUFFER, 0, (struct sockaddr*)&server, &length);
 		// se for UA e tiver nos conforme, break
 	}
 	

@@ -1,7 +1,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define CONN_PORT 64000
+#define MAX_BUFFER 512
+#define CONN_PORT  64000
 
 #define I_FRAME     0x00
 #define NS_SENDER   0x70
