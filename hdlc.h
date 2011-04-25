@@ -1,11 +1,16 @@
 #ifndef _HDLC_H
 #define _HDLC_H
 
+#include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 
+#include <netinet/in.h>
+#include <pthread.h>
+
 #define MAX_BUFFER 512
 #define CONN_PORT  64000
+#define TIMEOUT_MS 100
 
 #define I_FRAME     0x00
 #define NS_SENDER   0x70
@@ -33,8 +38,17 @@
 
 #define CRC_OK 0xF0B8
 
-static int len_send, len_recv;
-static uint8_t buf_send[MAX_BUFFER], buf_recv[MAX_BUFFER];
+int len_send, len_recv;
+uint8_t buf_send[MAX_BUFFER], buf_recv[MAX_BUFFER];
+pthread_mutex_t mutex;
+pthread_cond_t received;
+
+typedef struct {
+	int sock;
+	struct sockaddr_in sock_addr;
+	socklen_t sock_len;
+	FILE* file;
+} HDLCSocket;
 
 typedef struct {
 	uint8_t init_flag;

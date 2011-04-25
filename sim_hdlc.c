@@ -16,7 +16,7 @@
 void error(char *);
 int main(int argc, char **argv) {
 	int c;
-	struct sockaddr_in server;
+	HDLCSocket data;
 	char *host = NULL, *filename = NULL;
 	
 	if (argc == 1) {
@@ -37,27 +37,32 @@ int main(int argc, char **argv) {
 		}
 	}
 	
-	int sock = socket(AF_INET, SOCK_DGRAM, 0);
-	if (sock < 0) error("socket");
+	pthread_mutex_init(&mutex, NULL);
+	pthread_cond_init(&received, NULL);
 	
-	server.sin_family = AF_INET;
+	data.sock = socket(AF_INET, SOCK_DGRAM, 0);
+	if (data.sock < 0) error("socket");
+	
+	data.sock_addr.sin_family = AF_INET;
 	struct hostent* hp = gethostbyname(host);
 	if (hp == 0) error("Unknown host");
 	
-	memcpy(&server.sin_addr, hp->h_addr, hp->h_length);
-	server.sin_port = htons(CONN_PORT);
-	socklen_t length = sizeof(struct sockaddr_in);
+	memcpy(&data.sock_addr.sin_addr, hp->h_addr, hp->h_length);
+	data.sock_addr.sin_port = htons(CONN_PORT);
+	data.sock_len = sizeof(struct sockaddr_in);
 	
 	srand(time(NULL));
 	if (filename == NULL) {
-		run_server(sock, (struct sockaddr*)&server, length);
+		run_server(&data);
 	} else {
-		FILE* file = fopen(filename, "r");
-		if (file == 0) error("file");
-		run_client(sock, (struct sockaddr*)&server, length, file);
-		fclose(file);
+		data.file = fopen(filename, "r");
+		if (data.file == 0) error("file");
+		run_client(&data);
+		fclose(data.file);
 	}
 	
+	pthread_cond_destroy(&received);
+	pthread_mutex_destroy(&mutex);
 	return 0;
 }
 

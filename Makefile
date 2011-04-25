@@ -5,7 +5,7 @@ SRCS = $(OBJS,.o=.c)
 all: sim_hdlc
 
 sim_hdlc: $(OBJS)
-	gcc -O2 -lc -o sim_hdlc $(OBJS)
+	gcc -O2 -lc -lpthread -o sim_hdlc $(OBJS)
 
 .c.o:
 	gcc -c -O2 -Wall $<
