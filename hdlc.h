@@ -36,8 +36,6 @@
 #define ESCAPE_CHAR  0x7D
 #define ESCAPE_CONST 0x20
 
-#define CRC_OK 0xF0B8
-
 int len_send, len_recv;
 uint8_t buf_send[MAX_BUFFER], buf_recv[MAX_BUFFER];
 pthread_mutex_t mutex, log_lock;
@@ -70,6 +68,8 @@ int build_disc(uint8_t* buffer);
 int build_rr(uint8_t* buffer, int n);
 int build_rnr(uint8_t* buffer, int n);
 
-void report(const char* who, const char* msg);
+uint8_t frame_type(uint8_t control);
+int unpack_frame(uint8_t* control, uint8_t* data, uint8_t* frame, int len);
+void report_frame(const char* who, uint8_t control, const char* status);
 
 #endif

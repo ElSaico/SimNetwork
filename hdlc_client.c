@@ -15,17 +15,32 @@ void* send_sabm(void* args) {
 		
 		len_send = build_sabm(buf_send);
 		sendto(data->sock, buf_send, len_send, 0, (struct sockaddr*)&data->sock_addr, data->sock_len);
+		report_frame("tx", U_SABM, "ok");
 		wait = pthread_cond_timedwait(&received, &mutex, &limit);
 		if (wait == 0) {
 			pthread_mutex_unlock(&mutex);
 			pthread_exit(NULL);
 		}
-		report("tx", "[TIMEOUT] SABM");
+		report_frame("tx", U_SABM, "timeout");
 	}
 }
 
 void* recv_ua(void* args) {
-	pthread_exit(NULL);
+	HDLCSocket* data = (HDLCSocket*)args;
+	uint8_t control, info[MAX_BUFFER/2];
+	while (1) {
+		pthread_mutex_lock(&mutex);
+		len_recv = recvfrom(data->sock, buf_recv, MAX_BUFFER, 0, (struct sockaddr *)&data->sock_addr, &data->sock_len);
+		len_recv = unpack_frame(&control, info, buf_recv, len_recv);
+		pthread_mutex_unlock(&mutex);
+		if (len_recv >= 0) {
+			report_frame("rx", control, "OK");
+			if (frame_type(control) == U_SABM) {
+				pthread_cond_signal(&received);
+				pthread_exit(NULL);
+			}
+		}
+	}
 }
 
 void run_client(HDLCSocket* data) {

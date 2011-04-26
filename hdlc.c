@@ -144,20 +144,50 @@ int build_rnr(uint8_t* buffer, int n) {
 	return build_frame(buffer, S_FRAME | S_RNR | n, (const uint8_t*)"", 0);
 }
 
-uint8_t frame_type(uint8_t* frame, int size) {
-	HDLCHeader* head = (HDLCHeader*)(frame+1); // que foi? gosto de viver perigosamente
-	switch(head->control) {
+uint8_t frame_type(uint8_t control) {
+	switch (control) {
 		case U_SABM:
 		case U_UA:
 		case U_DISC:
-			return head->control;
+			return control;
 		default:
-			return head->control & NOT_I ? head->control & S_TYPE : I_FRAME;
+			return control & NOT_I ? control & S_TYPE : I_FRAME;
 	}
 }
 
-void report(const char* who, const char* msg) {
+int unpack_frame(uint8_t* control, uint8_t* data, uint8_t* frame, int len) {
+	if (len < 0)
+		return -1;
+
+	int new_len = byte_unstuff(frame, len);
+	HDLCHeader* head = (HDLCHeader*)frame;
+	HDLCFooter* foot = (HDLCFooter*)(frame+new_len-3); // que foi? gosto de viver perigosamente
+	if ((head->init_flag != FRAME_FLAG) && (foot->end_flag != FRAME_FLAG))
+		return -1;
+	
+	if (pppfcs16(PPPINITFCS16, frame+1, new_len-2) != PPPGOODFCS16)
+		return -1;
+	
+	*control = head->control;
+	memcpy(data, frame+3, new_len-6);
+	return new_len-6;
+}
+
+void report_frame(const char* who, uint8_t control, const char* status) {
 	pthread_mutex_lock(&log_lock);
-	printf("(%s) %s\n", who, msg);
+	switch(frame_type(control)) {
+		case U_SABM:
+			printf("(%s) SABM [%s]\n", who, status); break;
+		case U_UA:
+			printf("(%s) UA [%s]\n", who, status); break;
+		case U_DISC:
+			printf("(%s) DISC [%s]\n", who, status); break;
+		case S_TYPE:
+			printf("(%s) S [%s]\n", who, status); break; // TODO
+		case I_FRAME:
+			printf("(%s) I [%s]\n", who, status); break; // TODO
+		default:
+			printf("(%s) ??? [unknown]\n", who); break;
+	}
 	pthread_mutex_unlock(&log_lock);
 }
