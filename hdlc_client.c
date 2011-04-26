@@ -29,10 +29,7 @@ void* recv_ua(void* args) {
 	HDLCSocket* data = (HDLCSocket*)args;
 	uint8_t control, info[MAX_BUFFER/2];
 	while (1) {
-		pthread_mutex_lock(&mutex);
-		len_recv = recvfrom(data->sock, buf_recv, MAX_BUFFER, 0, (struct sockaddr *)&data->sock_addr, &data->sock_len);
-		len_recv = unpack_frame(&control, info, buf_recv, len_recv);
-		pthread_mutex_unlock(&mutex);
+		recv_frame(&control, info, data);
 		if (len_recv >= 0) {
 			report_frame("rx", control, "OK");
 			if (frame_type(control) == U_SABM) {

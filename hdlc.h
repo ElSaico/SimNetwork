@@ -69,7 +69,7 @@ int build_rr(uint8_t* buffer, int n);
 int build_rnr(uint8_t* buffer, int n);
 
 uint8_t frame_type(uint8_t control);
-int unpack_frame(uint8_t* control, uint8_t* data, uint8_t* frame, int len);
+int recv_frame(uint8_t* control, uint8_t* info, HDLCSocket* data);
 void report_frame(const char* who, uint8_t control, const char* status);
 
 #endif

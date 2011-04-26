@@ -155,22 +155,25 @@ uint8_t frame_type(uint8_t control) {
 	}
 }
 
-int unpack_frame(uint8_t* control, uint8_t* data, uint8_t* frame, int len) {
-	if (len < 0)
-		return -1;
-
-	int new_len = byte_unstuff(frame, len);
-	HDLCHeader* head = (HDLCHeader*)frame;
-	HDLCFooter* foot = (HDLCFooter*)(frame+new_len-3); // que foi? gosto de viver perigosamente
-	if ((head->init_flag != FRAME_FLAG) && (foot->end_flag != FRAME_FLAG))
+int recv_frame(uint8_t* control, uint8_t* info, HDLCSocket* data) {
+	pthread_mutex_lock(&mutex);
+	len_recv = recvfrom(data->sock, buf_recv, MAX_BUFFER, 0, (struct sockaddr *)&data->sock_addr, &data->sock_len);
+	pthread_mutex_unlock(&mutex);
+	if (len_recv < 0)
 		return -1;
 	
-	if (pppfcs16(PPPINITFCS16, frame+1, new_len-2) != PPPGOODFCS16)
+	len_recv = byte_unstuff(buf_recv, len_recv);
+	HDLCHeader* head = (HDLCHeader*)buf_recv;
+	HDLCFooter* foot = (HDLCFooter*)(buf_recv+len_recv-3); // que foi? gosto de viver perigosamente
+	if ((head->init_flag != FRAME_FLAG) && (head->address != FRAME_BCAST) && (foot->end_flag != FRAME_FLAG))
+		return -1;
+	
+	if (pppfcs16(PPPINITFCS16, buf_recv+1, len_recv-2) != PPPGOODFCS16)
 		return -1;
 	
 	*control = head->control;
-	memcpy(data, frame+3, new_len-6);
-	return new_len-6;
+	memcpy(info, buf_recv+3, len_recv-6);
+	return len_recv-6;
 }
 
 void report_frame(const char* who, uint8_t control, const char* status) {
