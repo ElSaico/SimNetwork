@@ -136,29 +136,42 @@ int build_disc(uint8_t* buffer) {
 	return build_frame(buffer, U_DISC, (const uint8_t*)"", 0);
 }
 
-int build_rr(uint8_t* buffer, int n) {
-	return build_frame(buffer, S_FRAME | S_RR | n, (const uint8_t*)"", 0);
+int build_rr(uint8_t* buffer, int n, bool pf) {
+	uint8_t control = S_FRAME | S_RR | n;
+	if (pf)
+		control |= POLLING_FINAL;
+	return build_frame(buffer, control, (const uint8_t*)"", 0);
 }
 
 int build_rnr(uint8_t* buffer, int n) {
 	return build_frame(buffer, S_FRAME | S_RNR | n, (const uint8_t*)"", 0);
 }
 
-uint8_t frame_type(uint8_t control) {
-	switch (control) {
+uint8_t frame_type(uint8_t* frame) {
+	HDLCHeader* head = (HDLCHeader*)frame;
+	switch (head->control) {
 		case U_SABM:
 		case U_UA:
 		case U_DISC:
-			return control;
-		default:
-			return control & NOT_I ? control & S_TYPE : I_FRAME;
+			return head->control;
+		default: // precisa expandir para cobrir RR/RNR
+			return head->control & NOT_I ? head->control & S_TYPE : I_FRAME;
 	}
 }
 
-int recv_frame(uint8_t* control, uint8_t* info, HDLCSocket* data) {
-	pthread_mutex_lock(&mutex);
-	len_recv = recvfrom(data->sock, buf_recv, MAX_BUFFER, 0, (struct sockaddr *)&data->sock_addr, &data->sock_len);
-	pthread_mutex_unlock(&mutex);
+uint8_t frame_seq(uint8_t* frame) {
+	if (frame_type(frame) == I_FRAME) {
+		HDLCHeader* head = (HDLCHeader*)frame;
+		return head->control & NS_RECEIVER;
+	} else {
+		return WINDOW_SIZE;
+	}
+}
+
+int recv_frame(uint8_t* control, uint8_t* info) {
+	pthread_mutex_lock(&network);
+	len_recv = recvfrom(data.sock, buf_recv, MAX_BUFFER, 0, (struct sockaddr *)&data.sock_addr, &data.sock_len);
+	pthread_mutex_unlock(&network);
 	if (len_recv < 0)
 		return -1;
 	
@@ -176,9 +189,9 @@ int recv_frame(uint8_t* control, uint8_t* info, HDLCSocket* data) {
 	return len_recv-6;
 }
 
-void report_frame(const char* who, uint8_t control, const char* status) {
+void report_frame(const char* who, uint8_t* frame, const char* status) {
 	pthread_mutex_lock(&log_lock);
-	switch(frame_type(control)) {
+	switch(frame_type(frame)) {
 		case U_SABM:
 			printf("(%s) SABM [%s]\n", who, status); break;
 		case U_UA:

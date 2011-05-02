@@ -11,4 +11,4 @@
 
 #include "hdlc.h"
 
-void run_server(HDLCSocket* data);
+void run_server();

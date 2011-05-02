@@ -16,8 +16,7 @@
 
 void error(char *);
 int main(int argc, char **argv) {
-	int c;
-	HDLCSocket data;
+	int i, c;
 	char *host = NULL, *filename = NULL;
 	
 	if (argc == 1) {
@@ -39,8 +38,14 @@ int main(int argc, char **argv) {
 	}
 	
 	pthread_mutex_init(&log_lock, NULL);
-	pthread_mutex_init(&mutex, NULL);
-	pthread_cond_init(&received, NULL);
+	pthread_mutex_init(&disc_lock, NULL);
+	pthread_mutex_init(&time_lock, NULL);
+	pthread_mutex_init(&network, NULL);
+	pthread_mutex_init(&window, NULL);
+	for (i = 0; i <= WINDOW_SIZE; ++i)
+		pthread_cond_init(&received[i], NULL);
+	
+	disconnect = false;
 	
 	data.sock = socket(AF_INET, SOCK_DGRAM, 0);
 	if (data.sock < 0) error("socket");
@@ -58,17 +63,21 @@ int main(int argc, char **argv) {
 	srand(time(NULL));
 	if (filename == NULL) {
 		printf("Initializing server\n");
-		run_server(&data);
+		run_server();
 	} else {
 		printf("Initializing client\n");
 		data.file = fopen(filename, "r");
 		if (data.file == 0) error("file");
-		run_client(&data);
+		run_client();
 		fclose(data.file);
 	}
 	
-	pthread_cond_destroy(&received);
-	pthread_mutex_destroy(&mutex);
+	for (i = 0; i <= WINDOW_SIZE; ++i)
+		pthread_cond_destroy(&received[i]);
+	pthread_mutex_destroy(&window);
+	pthread_mutex_destroy(&network);
+	pthread_mutex_destroy(&time_lock);
+	pthread_mutex_destroy(&disc_lock);
 	pthread_mutex_destroy(&log_lock);
 	return 0;
 }
