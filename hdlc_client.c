@@ -18,7 +18,9 @@ void* send_frame(void* args) {
 	pthread_mutex_unlock(&network);
 	if (wait != 0) {
 		report_frame("tx", buf_send[i], "timeout");
-		// atualizar variável timeout
+		pthread_mutex_lock(&time_lock);
+		timeout = true;
+		pthread_mutex_unlock(&time_lock);
 	} else {
 		if (i < WINDOW_SIZE) { // + ser o que foi acordado pelo RR
 			// signal pros anteriores
@@ -45,6 +47,7 @@ void* recv_loop(void* args) {
 }
 
 void run_client() {
+	bool time;
 	pthread_t send[WINDOW_SIZE+1], recv;
 	pthread_create(&recv, NULL, &recv_loop, NULL);
 	
@@ -52,5 +55,8 @@ void run_client() {
 	do {
 		pthread_create(&send[0], NULL, &send_frame, (void*)WINDOW_SIZE);
 		pthread_join(send[0], NULL);
-	} while(timeout);
+		pthread_mutex_lock(&time_lock);
+		time = timeout;
+		pthread_mutex_unlock(&time_lock);
+	} while(time);
 }
