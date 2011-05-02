@@ -201,7 +201,7 @@ void report_frame(const char* who, uint8_t* frame, const char* status) {
 		case S_TYPE:
 			printf("(%s) S [%s]\n", who, status); break; // TODO
 		case I_FRAME:
-			printf("(%s) I [%s]\n", who, status); break; // TODO
+			printf("(%s) I %d [%s]\n", who, frame_seq(frame), status); break;
 		default:
 			printf("(%s) ??? [unknown]\n", who); break;
 	}
