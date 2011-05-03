@@ -10,7 +10,7 @@
 
 #define MAX_BUFFER  512
 #define CONN_PORT   64000
-#define TIMEOUT_MS  100
+#define TIMEOUT_MS  1000
 #define WINDOW_SIZE 8
 
 #define I_FRAME     0x00
@@ -63,7 +63,7 @@ uint8_t buf_send[WINDOW_SIZE+1][MAX_BUFFER], buf_recv[MAX_BUFFER];
 bool timeout, disconnect;
 
 pthread_mutex_t network, window, log_lock, disc_lock, time_lock;
-pthread_cond_t received[WINDOW_SIZE+1]; // received[WINDOW_SIZE] = tipo S ou U
+pthread_cond_t received;
 
 uint16_t pppfcs16(uint16_t fcs, uint8_t* buffer, int length);
 

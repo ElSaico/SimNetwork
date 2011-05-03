@@ -14,17 +14,16 @@ void* send_frame(void* args) {
 	
 	sendto(data.sock, buf_send[i], len_send[i], 0, (struct sockaddr*)&data.sock_addr, data.sock_len);
 	report_frame("tx", buf_send[i], "sent");
-	wait = pthread_cond_timedwait(&received[i], &network, &limit);
+	wait = pthread_cond_timedwait(&received, &network, &limit);
 	pthread_mutex_unlock(&network);
 	if (wait != 0) {
 		report_frame("tx", buf_send[i], "timeout");
-		pthread_mutex_lock(&time_lock);
-		timeout = true;
-		pthread_mutex_unlock(&time_lock);
 	} else {
+		pthread_mutex_lock(&time_lock);
+		timeout = false;
+		pthread_mutex_unlock(&time_lock);
 		if (i < WINDOW_SIZE) { // + ser o que foi acordado pelo RR
-			// signal pros anteriores
-			// deslizar janela
+			// signal pro resto
 		}
 	}
 	return NULL;
@@ -37,7 +36,7 @@ void* recv_loop(void* args) {
 		recv_frame(&control, info);
 		if (len_recv >= 0) {
 			report_frame("rx", buf_recv, "OK");
-			pthread_cond_signal(&received[frame_seq(buf_recv)]);
+			pthread_cond_signal(&received);
 		}
 		pthread_mutex_lock(&disc_lock);
 		disc = disconnect;
@@ -51,6 +50,9 @@ void run_client() {
 	pthread_t send[WINDOW_SIZE+1], recv;
 	pthread_create(&recv, NULL, &recv_loop, NULL);
 	
+	pthread_mutex_lock(&time_lock);
+	timeout = true;
+	pthread_mutex_unlock(&time_lock);
 	len_send[WINDOW_SIZE] = build_sabm(buf_send[WINDOW_SIZE]);
 	do {
 		pthread_create(&send[0], NULL, &send_frame, (void*)WINDOW_SIZE);

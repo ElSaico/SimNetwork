@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include "hdlc.h"
 
@@ -169,20 +170,22 @@ uint8_t frame_seq(uint8_t* frame) {
 }
 
 int recv_frame(uint8_t* control, uint8_t* info) {
-	pthread_mutex_lock(&network);
 	len_recv = recvfrom(data.sock, buf_recv, MAX_BUFFER, 0, (struct sockaddr *)&data.sock_addr, &data.sock_len);
-	pthread_mutex_unlock(&network);
 	if (len_recv < 0)
 		return -1;
 	
 	len_recv = byte_unstuff(buf_recv, len_recv);
 	HDLCHeader* head = (HDLCHeader*)buf_recv;
 	HDLCFooter* foot = (HDLCFooter*)(buf_recv+len_recv-3); // que foi? gosto de viver perigosamente
-	if ((head->init_flag != FRAME_FLAG) && (head->address != FRAME_BCAST) && (foot->end_flag != FRAME_FLAG))
+	if ((head->init_flag != FRAME_FLAG) && (head->address != FRAME_BCAST) && (foot->end_flag != FRAME_FLAG)) {
+		report_frame("rx", buf_recv, "malformed frame");
 		return -1;
+	}
 	
-	if (pppfcs16(PPPINITFCS16, buf_recv+1, len_recv-2) != PPPGOODFCS16)
+	if (pppfcs16(PPPINITFCS16, buf_recv+1, len_recv-2) != PPPGOODFCS16) {
+		report_frame("rx", buf_recv, "CRC mismatch");
 		return -1;
+	}
 	
 	*control = head->control;
 	memcpy(info, buf_recv+3, len_recv-6);

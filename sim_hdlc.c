@@ -16,7 +16,7 @@
 
 void error(char *);
 int main(int argc, char **argv) {
-	int i, c;
+	int c;
 	char *host = NULL, *filename = NULL;
 	
 	if (argc == 1) {
@@ -42,15 +42,12 @@ int main(int argc, char **argv) {
 	pthread_mutex_init(&time_lock, NULL);
 	pthread_mutex_init(&network, NULL);
 	pthread_mutex_init(&window, NULL);
-	for (i = 0; i <= WINDOW_SIZE; ++i)
-		pthread_cond_init(&received[i], NULL);
+	pthread_cond_init(&received, NULL);
 	
 	disconnect = false;
 	
 	data.sock = socket(AF_INET, SOCK_DGRAM, 0);
 	if (data.sock < 0) error("socket");
-	int flags = fcntl(data.sock, F_GETFL);
-	fcntl(data.sock, F_SETFL, flags | O_NONBLOCK);
 	
 	data.sock_addr.sin_family = AF_INET;
 	struct hostent* hp = gethostbyname(host);
@@ -72,8 +69,7 @@ int main(int argc, char **argv) {
 		fclose(data.file);
 	}
 	
-	for (i = 0; i <= WINDOW_SIZE; ++i)
-		pthread_cond_destroy(&received[i]);
+	pthread_cond_destroy(&received);
 	pthread_mutex_destroy(&window);
 	pthread_mutex_destroy(&network);
 	pthread_mutex_destroy(&time_lock);
